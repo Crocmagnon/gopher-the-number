@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -54,40 +55,33 @@ func assertCheckGuess(t testing.TB, guess, random int, wantStatus string, wantWo
 
 func TestLoopUntilFound(t *testing.T) {
 	t.Run("found on first try", func(t *testing.T) {
-		output := bytes.Buffer{}
-		input := strings.NewReader("37\n")
+		inputs := []int{37}
 		random := 37
-		LoopUntilFound(&output, input, random)
-
-		got := output.String()
-		want := "your guess: \nGood job!\nYou got it right in 1 try.\n"
-
-		if got != want {
-			t.Errorf("got %q want %q", got, want)
+		want := []string{
+			"your guess: ",
+			"Good job!",
+			"You got it right in 1 try.",
 		}
+
+		assertLoopUntilFound(t, inputs, random, want)
 	})
 	t.Run("found on second try", func(t *testing.T) {
-		output := bytes.Buffer{}
-		input := strings.NewReader("50\n37\n")
+		inputs := []int{50, 37}
 		random := 37
-		LoopUntilFound(&output, input, random)
-
-		got := output.String()
-		want := "your guess: \nNope, lower.\nyour guess: \nGood job!\nYou got it right in 2 tries.\n"
-
-		if got != want {
-			t.Errorf("got %q want %q", got, want)
+		want := []string{
+			"your guess: ",
+			"Nope, lower.",
+			"your guess: ",
+			"Good job!",
+			"You got it right in 2 tries.",
 		}
+
+		assertLoopUntilFound(t, inputs, random, want)
 	})
 	t.Run("found after many tries", func(t *testing.T) {
-		output := bytes.Buffer{}
-		inputs := []string{"50", "25", "32", "37", ""}
-		input := strings.NewReader(strings.Join(inputs, "\n"))
+		inputs := []int{50, 25, 32, 37}
 		random := 37
-		LoopUntilFound(&output, input, random)
-
-		got := output.String()
-		wants := []string{
+		want := []string{
 			"your guess: ",
 			"Nope, lower.",
 			"your guess: ",
@@ -97,12 +91,36 @@ func TestLoopUntilFound(t *testing.T) {
 			"your guess: ",
 			"Good job!",
 			"You got it right in 4 tries.",
-			"",
 		}
-		want := strings.Join(wants, "\n")
 
-		if got != want {
-			t.Errorf("got %q want %q", got, want)
-		}
+		assertLoopUntilFound(t, inputs, random, want)
 	})
+}
+
+func assertLoopUntilFound(t testing.TB, intInputs []int, random int, outputs []string) {
+	t.Helper()
+
+	inputs := convertIntInputsToStrings(intInputs)
+	inputs = append(inputs, "")
+	inputBuffer := strings.NewReader(strings.Join(inputs, "\n"))
+
+	outputs = append(outputs, "")
+	want := strings.Join(outputs, "\n")
+
+	outputBuffer := bytes.Buffer{}
+
+	LoopUntilFound(&outputBuffer, inputBuffer, random)
+
+	got := outputBuffer.String()
+	if got != want {
+		t.Errorf("got %q want %q", got, want)
+	}
+}
+
+func convertIntInputsToStrings(inputs []int) []string {
+	inputStrings := make([]string, len(inputs)+1)
+	for i, input := range inputs {
+		inputStrings[i] = strconv.Itoa(input)
+	}
+	return inputStrings
 }
