@@ -1,4 +1,4 @@
-package lib
+package main
 
 func CheckGuess(guess, random int) (string, bool) {
 	if guess == random {
