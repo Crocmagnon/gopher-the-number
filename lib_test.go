@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"strings"
 	"testing"
 )
 
@@ -48,4 +50,59 @@ func assertCheckGuess(t testing.TB, guess, random int, wantStatus string, wantWo
 	if won != wantWon {
 		t.Errorf("got %v want %v", won, wantWon)
 	}
+}
+
+func TestLoopUntilFound(t *testing.T) {
+	t.Run("found on first try", func(t *testing.T) {
+		output := bytes.Buffer{}
+		input := strings.NewReader("37\n")
+		random := 37
+		LoopUntilFound(&output, input, random)
+
+		got := output.String()
+		want := "your guess: \nGood job!\nYou got it right in 1 try.\n"
+
+		if got != want {
+			t.Errorf("got %q want %q", got, want)
+		}
+	})
+	t.Run("found on second try", func(t *testing.T) {
+		output := bytes.Buffer{}
+		input := strings.NewReader("50\n37\n")
+		random := 37
+		LoopUntilFound(&output, input, random)
+
+		got := output.String()
+		want := "your guess: \nNope, lower.\nyour guess: \nGood job!\nYou got it right in 2 tries.\n"
+
+		if got != want {
+			t.Errorf("got %q want %q", got, want)
+		}
+	})
+	t.Run("found after many tries", func(t *testing.T) {
+		output := bytes.Buffer{}
+		inputs := []string{"50", "25", "32", "37", ""}
+		input := strings.NewReader(strings.Join(inputs, "\n"))
+		random := 37
+		LoopUntilFound(&output, input, random)
+
+		got := output.String()
+		wants := []string{
+			"your guess: ",
+			"Nope, lower.",
+			"your guess: ",
+			"Try higher.",
+			"your guess: ",
+			"Try higher.",
+			"your guess: ",
+			"Good job!",
+			"You got it right in 4 tries.",
+			"",
+		}
+		want := strings.Join(wants, "\n")
+
+		if got != want {
+			t.Errorf("got %q want %q", got, want)
+		}
+	})
 }
