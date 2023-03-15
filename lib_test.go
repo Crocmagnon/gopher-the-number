@@ -39,7 +39,8 @@ func TestCheckGuess(t *testing.T) {
 	})
 }
 
-func assertCheckGuess(t *testing.T, guess, random int, wantStatus string, wantWon bool) {
+func assertCheckGuess(t testing.TB, guess, random int, wantStatus string, wantWon bool) {
+	t.Helper()
 	status, won := CheckGuess(guess, random)
 	if status != wantStatus {
 		t.Errorf("got %q want %q", status, wantStatus)
