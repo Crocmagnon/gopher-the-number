@@ -11,3 +11,5 @@ go build ./
 ## Name origin
 Since the game makes you chase after a randomly selected integer,
 you need to "go for the number".
+
+Also, I'm bad at naming things.
