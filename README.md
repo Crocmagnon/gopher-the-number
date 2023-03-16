@@ -5,6 +5,10 @@ as an exercise for TDD.
 ## Build & run
 ```shell
 go build ./
+# or
+go install github.com/Crocmagnon/gopher-the-number@latest
+
+# then
 ./gopher-the-number
 ```
 
