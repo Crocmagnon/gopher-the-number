@@ -7,6 +7,8 @@ import (
 	"strconv"
 )
 
+// CheckGuess checks the guess against the random value and returns a status message alongside
+// a win boolean.
 func CheckGuess(guess, random int) (string, bool) {
 	if guess == random {
 		return "Good job!", true

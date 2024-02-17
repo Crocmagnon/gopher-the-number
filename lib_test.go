@@ -19,101 +19,90 @@ Then, the app prompts the player again, etc.
 */
 
 func TestCheckGuess(t *testing.T) {
-	t.Run("guess is lower than random", func(t *testing.T) {
-		random := 63
-		guess := 50
-		wantStatus := "Try higher."
-
-		assertCheckGuess(t, guess, random, wantStatus, false)
-	})
-	t.Run("guess is higher than random", func(t *testing.T) {
-		random := 34
-		guess := 50
-		wantStatus := "Nope, lower."
-
-		assertCheckGuess(t, guess, random, wantStatus, false)
-	})
-	t.Run("guess is equal to random", func(t *testing.T) {
-		random := 50
-		guess := 50
-		wantStatus := "Good job!"
-
-		assertCheckGuess(t, guess, random, wantStatus, true)
-	})
-}
-
-func assertCheckGuess(t testing.TB, guess, random int, wantStatus string, wantWon bool) {
-	t.Helper()
-	status, won := CheckGuess(guess, random)
-	if status != wantStatus {
-		t.Errorf("got %q want %q", status, wantStatus)
+	tests := []struct {
+		name       string
+		random     int
+		guess      int
+		wantStatus string
+	}{
+		{"guess is lower than random", 50, 34, "Try higher."},
+		{"guess is higher than random", 50, 63, "Nope, lower."},
+		{"guess is equal to random", 50, 50, "Good job!"},
 	}
-	if won != wantWon {
-		t.Errorf("got %v want %v", won, wantWon)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			status, won := CheckGuess(tt.guess, tt.random)
+			if status != tt.wantStatus {
+				t.Errorf("got %q want %q", status, tt.wantStatus)
+			}
+			if tt.guess == tt.random && !won {
+				t.Error("want won")
+			}
+		})
 	}
 }
 
 func TestLoopUntilFound(t *testing.T) {
-	t.Run("found on first try", func(t *testing.T) {
-		inputs := []int{37}
-		random := 37
-		want := []string{
-			"your guess: ",
-			"Good job!",
-			"You got it right in 1 try.",
-		}
+	tests := []struct {
+		name   string
+		inputs []int
+		random int
+		want   []string
+	}{
+		{
+			"found on first try",
+			[]int{37},
+			37,
+			[]string{"your guess: ", "Good job!", "You got it right in 1 try."},
+		},
+		{
+			"found on second try",
+			[]int{50, 37},
+			37,
+			[]string{
+				"your guess: ",
+				"Nope, lower.",
+				"your guess: ",
+				"Good job!",
+				"You got it right in 2 tries.",
+			},
+		},
+		{
+			"found after many tries",
+			[]int{50, 25, 32, 37},
+			37,
+			[]string{
+				"your guess: ",
+				"Nope, lower.",
+				"your guess: ",
+				"Try higher.",
+				"your guess: ",
+				"Try higher.",
+				"your guess: ",
+				"Good job!",
+				"You got it right in 4 tries.",
+			},
+		},
+	}
 
-		assertLoopUntilFound(t, inputs, random, want)
-	})
-	t.Run("found on second try", func(t *testing.T) {
-		inputs := []int{50, 37}
-		random := 37
-		want := []string{
-			"your guess: ",
-			"Nope, lower.",
-			"your guess: ",
-			"Good job!",
-			"You got it right in 2 tries.",
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			inputs := convertIntInputsToStrings(tt.inputs)
+			inputs = append(inputs, "")
+			inputBuffer := strings.NewReader(strings.Join(inputs, "\n"))
 
-		assertLoopUntilFound(t, inputs, random, want)
-	})
-	t.Run("found after many tries", func(t *testing.T) {
-		inputs := []int{50, 25, 32, 37}
-		random := 37
-		want := []string{
-			"your guess: ",
-			"Nope, lower.",
-			"your guess: ",
-			"Try higher.",
-			"your guess: ",
-			"Try higher.",
-			"your guess: ",
-			"Good job!",
-			"You got it right in 4 tries.",
-		}
+			wants := append(tt.want, "")
+			want := strings.Join(wants, "\n")
 
-		assertLoopUntilFound(t, inputs, random, want)
-	})
-}
+			outputBuffer := bytes.Buffer{}
 
-func assertLoopUntilFound(t testing.TB, intInputs []int, random int, outputs []string) {
-	t.Helper()
+			LoopUntilFound(&outputBuffer, inputBuffer, tt.random)
 
-	inputs := convertIntInputsToStrings(intInputs)
-	inputs = append(inputs, "")
-	inputBuffer := strings.NewReader(strings.Join(inputs, "\n"))
-
-	outputs = append(outputs, "")
-	want := strings.Join(outputs, "\n")
-
-	outputBuffer := bytes.Buffer{}
-
-	LoopUntilFound(&outputBuffer, inputBuffer, random)
-
-	got := outputBuffer.String()
-	if got != want {
-		t.Errorf("got %q want %q", got, want)
+			got := outputBuffer.String()
+			if got != want {
+				t.Errorf("got %q want %q", got, want)
+			}
+		})
 	}
 }
 
